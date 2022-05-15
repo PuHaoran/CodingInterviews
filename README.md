@@ -1,4 +1,6 @@
-## 1. 基础算法
+## 剑指 Offer（第 2 版）
+
+leetcode地址：https://leetcode.cn/problem-list/xb9nqhhg/
 
 ##### 数组
 
