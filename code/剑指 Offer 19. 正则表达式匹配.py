@@ -18,32 +18,41 @@ p = "a*"
 解释: 因为 '*' 代表可以匹配零个或多个前面的那一个元素, 在这里前面的元素就是 'a'。因此，字符串 "aa" 可被视为 'a' 重复了一次。
 """
 """ 题解
-①状态表示。f(i,j)，f(i,j)是s和p是否存在一个合法方案。
-②状态转移。s和p为两个串,f为状态转移方程，则
-s---------------
-               i
-p-------------
-             j
-1. p[j] not '*' and i, f(i,j)=(s[i]==p[j]||p[j]=='.')&&f(i-1,j-1)
-2. p[j] == '*', f(i,j)=f(i,j-2)||(f(i-1,j-2)&&s[i]==p[j-1])||(f(i-2,j-2)&&s[i]==p[j-1]&&s[i-1]==p[j-1]) ①
-               f(i-1,j)=f(i-1,j-2)||(f(i-2,j-2)&&s[i-1]==p[j-1])||(f(i-3,j-2)&&s[i-1]==p[j-1]&&s[i-2]==p[j-1]) ②
-=>
-f(i,j)=f(i,j-2)||(f(i-1,j)&&(s[i]==p[j-1]||p[j-1]=='.'))
+①状态表示。f(i,j)表示s[1...i]与p[1...j]的所有匹配方案是否有一成立。
+②状态转移，求f(i,j)。 
+    p[j] != '*' 
+        f(i, j) = (s[i] == p[j] or p[j] == '.') and f(i-1, j-1)
+    p[j] == '*' 
+p[j] == '*'情况的图示
+                   i
+o    o    o    o   o
+o    o    o    o   *
+         j-2  j-1  j
+注意：*和*前面一个数应视为一个整体，当*代表0个数时，其前面一个数也没有意义。
+*表示0个，f(i, j-2)
+*表示1个，f(i-1,j-2) and s[i] == p[j-1]
+*表示2个，f(i-2,j-2) and s[i] == p[j-1] and s[i-1] == p[j-1]
+=> 
+f(i,j) = f(i,j-2) or (f(i-1,j-2) and s[i] == p[j-1]) or (f(i-2,j-2) and s[i] == p[j-1] and s[i-1] == p[j-1]) ①
+f(i-1,j) = f(i-1,j-2) or (f(i-2,j-2) and s[i-1] == p[j-1]) or (f(i-2,j-2) and s[i-1] == p[j-1] and s[i-2] == p[j-1]) ②
+由①与②得
+f(i,j)=f(i,j-2) or (i and (f(i-1,j) and s[i] == p[j-1])
 """
 
 
 class Solution:
     def isMatch(self, s: str, p: str) -> bool:
-        n, m = len(s), len(p)
-        f = [[False]*(m+1) for _ in range(n+1)]
-        s, p = ' '+s, ' '+p
-        f[0][0] = True
-        for i in range(n+1):
-            for j in range(1, m+1):
-                if j+1 <= m and p[j+1] == '*':
+        m, n = len(s), len(p)
+        f = [[0]*(n+1) for _ in range(m+1)]
+        s, p = ' ' + s, ' ' + p
+        f[0][0] = 1
+        for i in range(0, m+1): # s为空，p不为空也可能匹配，故s从0开始
+            for j in range(1, n+1): # s不为空，p为空一定不匹配，故从1开始
+                # *和其前面的数视为一个整体考虑，当遍历到*前面的数则直接跳过
+                if j+1 <= n and p[j+1] == '*':
                     continue
                 if i and p[j] != '*':
-                    f[i][j] = f[i-1][j-1] and (s[i] == p[j] or p[j] == '.')
+                    f[i][j] = (s[i] == p[j] or p[j] == '.') and f[i-1][j-1]
                 elif p[j] == '*':
-                    f[i][j] = bool(f[i][j-2] or i and f[i-1][j] and (s[i] == p[j-1] or p[j-1] == '.'))
-        return f[n][m]
+                    f[i][j] = f[i][j-2] or (i and f[i-1][j] and (s[i] == p[j-1] or p[j-1] == '.'))
+        return bool(f[m][n])
